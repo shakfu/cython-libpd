@@ -133,7 +133,7 @@ if INCL_NUMPY:
 extensions = [
     # libpd
     Extension("libpd", ["src/libpd/libpd.pyx"], **cfg0),
-    Extension("pd",    ["src/libpd/pd.pyx"], **cfg0),
+    Extension("cypd",    ["src/libpd/cypd.pyx"], **cfg0),
 
     # csounddevice
     Extension("cysounddevice.buffer", ["src/cysounddevice/buffer.pyx"], **cfg1),

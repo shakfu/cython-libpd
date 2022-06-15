@@ -1,74 +1,7 @@
 
-cdef extern from "pd/m_pd.h":
-    """
-    #undef T_OBJECT
-    """
-    ctypedef float t_float
-    ctypedef struct t_pdinstance
-    ctypedef float t_floatarg
-    ctypedef float t_sample
-    ctypedef long t_int
+cimport pd
 
-    ctypedef struct t_symbol:
-        const char *s_name
-        # struct _class **s_thing
-        # struct _symbol *s_next
-
-
-    ctypedef union t_word:
-        t_float w_float
-        t_symbol *w_symbol
-        # t_gpointer *w_gpointer
-        # t_array *w_array
-        # struct _binbuf *w_binbuf
-        # int w_index
-
-    ctypedef enum t_atomtype:
-        A_NULL
-        A_FLOAT
-        A_SYMBOL
-        A_POINTER
-        A_SEMI
-        A_COMMA
-        A_DEFFLOAT
-        A_DEFSYM
-        A_DOLLAR
-        A_DOLLSYM
-        A_GIMME
-        A_CANT
-
-    ctypedef struct t_atom:
-        t_atomtype a_type
-    #     union word a_w
-
-
-    # memory mgmt
-    void *getbytes(size_t nbytes)
-    void *getzbytes(size_t nbytes)
-    void *copybytes(const void *src, size_t nbytes)
-    void freebytes(void *x, size_t nbytes)
-    void *resizebytes(void *x, size_t oldsize, size_t newsize)
-
-    # key funcs
-    t_symbol *gensym(const char *s)
-
-
-    # atom ops
-    void SETFLOAT(t_atom *atom, float f)
-    void SETSYMBOL(t_atom *atom, char *s)
-
-    # conversion
-    t_float atom_getfloat(const t_atom *a)
-    t_int atom_getint(const t_atom *a)
-    t_symbol *atom_getsymbol(const t_atom *a)
-    t_symbol *atom_gensym(const t_atom *a)
-    t_float atom_getfloatarg(int which, int argc, const t_atom *argv)
-    t_int atom_getintarg(int which, int argc, const t_atom *argv)
-    t_symbol *atom_getsymbolarg(int which, int argc, const t_atom *argv)
-    void atom_string(const t_atom *a, char *buf, unsigned int bufsize)
-
-
-cdef extern from "pd/z_libpd.h":
+cdef extern from "z_libpd.h":
 
 ## initialization
 
@@ -113,8 +46,7 @@ cdef extern from "pd/z_libpd.h":
     # buffer sizes are based on # of ticks and channels where:
     #     size = ticks * libpd_blocksize() * (in/out)channels
     # returns 0 on success
-    int libpd_process_float(const int ticks,
-        const float *inBuffer, float *outBuffer) nogil
+    int libpd_process_float(const int ticks, const float *inBuffer, float *outBuffer) nogil
 
     # process interleaved short samples from inBuffer -> libpd -> outBuffer
     # buffer sizes are based on # of ticks and channels where:
@@ -123,15 +55,13 @@ cdef extern from "pd/z_libpd.h":
     # so any values received from pd patches beyond -1 to 1 will result in garbage
     # note: for efficiency, does *not* clip input
     # returns 0 on success
-    int libpd_process_short(const int ticks,
-        const short *inBuffer, short *outBuffer) nogil
+    int libpd_process_short(const int ticks, const short *inBuffer, short *outBuffer) nogil
 
     # process interleaved double samples from inBuffer -> libpd -> outBuffer
     # buffer sizes are based on # of ticks and channels where:
     #     size = ticks * libpd_blocksize() * (in/out)channels
     # returns 0 on success
-    int libpd_process_double(const int ticks,
-        const double *inBuffer, double *outBuffer) nogil
+    int libpd_process_double(const int ticks, const double *inBuffer, double *outBuffer) nogil
 
     # process non-interleaved float samples from inBuffer -> libpd -> outBuffer
     # copies buffer contents to/from libpd without striping
@@ -157,13 +87,6 @@ cdef extern from "pd/z_libpd.h":
     # returns 0 on success
     int libpd_process_raw_double(const double *inBuffer, double *outBuffer) nogil
 
-## atom creation
-
-    # write a float value to the given atom
-    void libpd_set_float(t_atom *a, float x)
-
-    # write a symbol value to the given atom
-    void libpd_set_symbol(t_atom *a, const char *symbol)
 
 ## array access
 
@@ -187,6 +110,22 @@ cdef extern from "pd/z_libpd.h":
     # or offset + n exceeds range of array
     int libpd_write_array(const char *name, int offset, const float *src, int n)
 
+    # read n values from named src array and write into dest starting at an offset
+    # note: performs no bounds checking on dest
+    # note: only full-precision when compiled with PD_FLOATSIZE=64
+    # returns 0 on success or a negative error code if the array is non-existent
+    # or offset + n exceeds range of array
+    # double-precision variant of libpd_read_array()
+    int libpd_read_array_double(double *dest, const char *src, int offset, int n)
+
+    # read n values from src and write into named dest array starting at an offset
+    # note: performs no bounds checking on src
+    # note: only full-precision when compiled with PD_FLOATSIZE=64
+    # returns 0 on success or a negative error code if the array is non-existent
+    # or offset + n exceeds range of array
+    # double-precision variant of libpd_write_array()
+    int libpd_write_array_double(const char *dest, int offset, const double *src, int n)
+
 ## sending messages to pd
 
     # send a bang to a destination receiver
@@ -198,6 +137,12 @@ cdef extern from "pd/z_libpd.h":
     # ex: libpd_float("foo", 1) will send a 1.0 to [s foo] on the next tick
     # returns 0 on success or -1 if receiver name is non-existent
     int libpd_float(const char *recv, float x)
+    
+    # send a double to a destination receiver
+    # ex: libpd_double("foo", 1.1) will send a 1.1 to [s foo] on the next tick
+    # note: only full-precision when compiled with PD_FLOATSIZE=64
+    # returns 0 on success or -1 if receiver name is non-existent
+    int libpd_double(const char *recv, double x)
 
     # send a symbol to a destination receiver
     # ex: libpd_symbol("foo", "bar") will send "bar" to [s foo] on the next tick
@@ -214,6 +159,10 @@ cdef extern from "pd/z_libpd.h":
 
     # add a float to the current message in progress
     void libpd_add_float(float x)
+
+    # add a double to the current message in progress
+    # note: only full-precision when compiled with PD_FLOATSIZE=64
+    void libpd_add_double(double x)
 
     # add a symbol to the current message in progress
     void libpd_add_symbol(const char *symbol)
@@ -241,23 +190,33 @@ cdef extern from "pd/z_libpd.h":
 
 ## sending compound messages: atom array
 
+    # write a float value to the given atom
+    void libpd_set_float(pd.t_atom *a, float x)
+
+    # write a double value to the given atom
+    # note: only full-precision when compiled with PD_FLOATSIZE=64
+    void libpd_set_double(pd.t_atom *v, double x)
+
+    # write a symbol value to the given atom
+    void libpd_set_symbol(pd.t_atom *a, const char *symbol)
+
     # send an atom array of a given length as a list to a destination receiver
     # returns 0 on success or -1 if receiver name is non-existent
     # ex: send [list 1 2 bar( to [r foo] on the next tick with:
-    #     t_atom v[3]
+    #     pd.t_atom v[3]
     #     libpd_set_float(v, 1)
     #     libpd_set_float(v + 1, 2)
     #     libpd_set_symbol(v + 2, "bar")
     #     libpd_list("foo", 3, v)
-    int libpd_list(const char *recv, int argc, t_atom *argv)
+    int libpd_list(const char *recv, int argc, pd.t_atom *argv)
 
     # send a atom array of a given length as a typed message to a destination
     # receiver, returns 0 on success or -1 if receiver name is non-existent
     # ex: send [ pd dsp 1( on the next tick with:
-    #     t_atom v[1]
+    #     pd.t_atom v[1]
     #     libpd_set_float(v, 1)
     #     libpd_message("pd", "dsp", 1, v)
-    int libpd_message(const char *recv, const char *msg, int argc, t_atom *argv)
+    int libpd_message(const char *recv, const char *msg, int argc, pd.t_atom *argv)
 
 ## receiving messages from pd
 
@@ -285,6 +244,10 @@ cdef extern from "pd/z_libpd.h":
     # float receive hook signature, recv is the source receiver name
     ctypedef void (*t_libpd_floathook)(const char *recv, float x)
 
+    # double receive hook signature, recv is the source receiver name
+    # note: only full-precision when compiled with PD_FLOATSIZE=64
+    ctypedef void (*t_libpd_doublehook)(const char *recv, double x)
+
     # symbol receive hook signature, recv is the source receiver name
     ctypedef void (*t_libpd_symbolhook)(const char *recv, const char *symbol)
 
@@ -293,7 +256,7 @@ cdef extern from "pd/z_libpd.h":
     # which can be accessed using the atom accessor functions, ex:
     #     int i
     #     for (i = 0 i < argc i++) {
-    #       t_atom *a = &argv[n]
+    #       pd.t_atom *a = &argv[n]
     #       if (libpd_is_float(a)) {
     #         float x = libpd_get_float(a)
     #         // do something with float x
@@ -303,7 +266,7 @@ cdef extern from "pd/z_libpd.h":
     #       }
     #     }
     # note: check for both float and symbol types as atom may also be a pointer
-    ctypedef void (*t_libpd_listhook)(const char *recv, int argc, t_atom *argv)
+    ctypedef void (*t_libpd_listhook)(const char *recv, int argc, pd.t_atom *argv)
 
     # typed message hook signature, recv is the source receiver name and msg is
     # the typed message name: a message like [ foo bar 1 2 a b( will trigger a
@@ -312,7 +275,7 @@ cdef extern from "pd/z_libpd.h":
     # list elements which can be accessed using the atom accessor functions, ex:
     #     int i
     #     for (i = 0 i < argc i++) {
-    #       t_atom *a = &argv[n]
+    #       pd.t_atom *a = &argv[n]
     #       if (libpd_is_float(a)) {
     #         float x = libpd_get_float(a)
     #         // do something with float x
@@ -323,7 +286,7 @@ cdef extern from "pd/z_libpd.h":
     #     }
     # note: check for both float and symbol types as atom may also be a pointer
     ctypedef void (*t_libpd_messagehook)(const char *recv, const char *msg,
-        int argc, t_atom *argv)
+        int argc, pd.t_atom *argv)
 
     # set the print receiver hook, prints to stdout by default
     # note: do not call this while DSP is running
@@ -336,6 +299,14 @@ cdef extern from "pd/z_libpd.h":
     # set the float receiver hook, NULL by default
     # note: do not call this while DSP is running
     void libpd_set_floathook(const t_libpd_floathook hook)
+
+    # set the double receiver hook, NULL by default
+    # note: avoid calling this while DSP is running
+    # note: you can either have a double receiver hook, or a float receiver
+    #       hook (see above), but not both.
+    #       calling this, will automatically unset the float receiver hook
+    # note: only full-precision when compiled with PD_FLOATSIZE=64
+    void libpd_set_doublehook(const t_libpd_doublehook hook)
 
     # set the symbol receiver hook, NULL by default
     # note: do not call this while DSP is running
@@ -351,23 +322,28 @@ cdef extern from "pd/z_libpd.h":
 
     # check if an atom is a float type: 0 or 1
     # note: no NULL check is performed
-    int libpd_is_float(t_atom *a)
+    int libpd_is_float(pd.t_atom *a)
 
     # check if an atom is a symbol type: 0 or 1
     # note: no NULL check is performed
-    int libpd_is_symbol(t_atom *a)
+    int libpd_is_symbol(pd.t_atom *a)
 
     # get the float value of an atom
     # note: no NULL or type checks are performed
-    float libpd_get_float(t_atom *a)
+    float libpd_get_float(pd.t_atom *a)
+
+    # returns the double value of an atom
+    # note: no NULL or type checks are performed
+    # note: only full-precision when compiled with PD_FLOATSIZE=64
+    double libpd_get_double(pd.t_atom *a)
 
     # note: no NULL or type checks are performed
     # get symbol value of an atom
-    const char *libpd_get_symbol(t_atom *a)
+    const char *libpd_get_symbol(pd.t_atom *a)
 
     # increment to the next atom in an atom vector
     # returns next atom or NULL, assuming the atom vector is NULL-terminated
-    t_atom *libpd_next_atom(t_atom *a)
+    pd.t_atom *libpd_next_atom(pd.t_atom *a)
 
 ## sending MIDI messages to pd
 
@@ -437,8 +413,7 @@ cdef extern from "pd/z_libpd.h":
     # channel is 0-indexed, controller is 0-127, and value is 0-127
     # channels encode MIDI ports via: libpd_channel = pd_channel + 16 * pd_port
     # note: out of range values from pd are clamped
-    ctypedef void (*t_libpd_controlchangehook)(int channel,
-        int controller, int value)
+    ctypedef void (*t_libpd_controlchangehook)(int channel, int controller, int value)
 
     # MIDI program change receive hook signature
     # channel is 0-indexed and value is 0-127
@@ -525,24 +500,24 @@ cdef extern from "pd/z_libpd.h":
 
     # create a new pd instance
     # returns new instance or NULL when libpd is not compiled with PDINSTANCE
-    t_pdinstance *libpd_new_instance()
+    pd.t_pdinstance *libpd_new_instance()
 
     # set the current pd instance
     # subsequent libpd calls will affect this instance only
     # does nothing when libpd is not compiled with PDINSTANCE
-    void libpd_set_instance(t_pdinstance *p)
+    void libpd_set_instance(pd.t_pdinstance *p)
 
     # free a pd instance
     # does nothing when libpd is not compiled with PDINSTANCE
-    void libpd_free_instance(t_pdinstance *p)
+    void libpd_free_instance(pd.t_pdinstance *p)
 
     # get the current pd instance
-    t_pdinstance *libpd_this_instance()
+    pd.t_pdinstance *libpd_this_instance()
 
     # get a pd instance by index
     # returns NULL if index is out of bounds or "this" instance when libpd is not
     # compiled with PDINSTANCE
-    t_pdinstance *libpd_get_instance(int index)
+    pd.t_pdinstance *libpd_get_instance(int index)
 
     # get the number of pd instances
     # returns number or 1 when libpd is not compiled with PDINSTANCE
