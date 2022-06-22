@@ -8,7 +8,7 @@ LIBPD=src/libpd
 all: compile
 
 compile:
-	@CYTHONIZE=1 python3 setup.py build
+	@CYTHONIZE=1 python3 setup.py build_ext --inplace
 
 audio_test:
 	@echo "generating portaudio c implementation test"
