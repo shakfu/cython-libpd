@@ -169,7 +169,7 @@ cdef int audio_callback(const void *inputBuffer, void *outputBuffer,
                         unsigned long framesPerBuffer,
                         const libportaudio.PaStreamCallbackTimeInfo* timeInfo,
                         libportaudio.PaStreamCallbackFlags statusFlags,
-                        void *userData ) nogil:
+                        void *userData ) noexcept nogil:
     """Called by the PortAudio engine when audio is needed.
     
     May called at interrupt level on some machines so don't do anything
@@ -192,7 +192,7 @@ cdef int audio_callback(const void *inputBuffer, void *outputBuffer,
 
 
 # use with libpd_printhook to print to console
-cdef void pdprint(const char *s):
+cdef void pdprint(const char *s) noexcept:
     printf("><> %s", s)
 
 

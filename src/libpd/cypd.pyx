@@ -102,64 +102,64 @@ cdef object midibyte_callback = None
 # callback hooks
 
 # messaging
-cdef void print_callback_hook(const char *s):
+cdef void print_callback_hook(const char *s) noexcept:
     if print_callback:
         print_callback(s.decode())
 
-cdef void bang_callback_hook(const char *recv):
+cdef void bang_callback_hook(const char *recv) noexcept:
     if bang_callback:
         bang_callback(recv.decode())
 
-cdef void float_callback_hook(const char *recv, float f):
+cdef void float_callback_hook(const char *recv, float f) noexcept:
     if float_callback:
         float_callback(recv.decode(), f)
 
-cdef void double_callback_hook(const char *recv, double d):
+cdef void double_callback_hook(const char *recv, double d) noexcept:
     if double_callback:
         double_callback(recv.decode(), d)
 
-cdef void symbol_callback_hook(const char *recv, const char *symbol):
+cdef void symbol_callback_hook(const char *recv, const char *symbol) noexcept:
     if symbol_callback:
         symbol_callback(recv.decode(), symbol.decode())
 
-cdef void list_callback_hook(const char *recv, int argc, pd.t_atom *argv):
+cdef void list_callback_hook(const char *recv, int argc, pd.t_atom *argv) noexcept:
     cdef object args = None
     if list_callback:
         args = convert_args(recv, NULL, argc, argv)
         list_callback(*args)
 
-cdef void message_callback_hook(const char *recv, const char *symbol, int argc, pd.t_atom *argv):
+cdef void message_callback_hook(const char *recv, const char *symbol, int argc, pd.t_atom *argv) noexcept:
     cdef object args = None
     if message_callback:
         args = convert_args(recv, symbol, argc, argv)
         message_callback(*args)
 
 # midi
-cdef void noteon_callback_hook(int channel, int pitch, int velocity):
+cdef void noteon_callback_hook(int channel, int pitch, int velocity) noexcept:
     if noteon_callback:
         noteon_callback(channel, pitch, velocity)
 
-cdef void controlchange_callback_hook(int channel, int controller, int value):
+cdef void controlchange_callback_hook(int channel, int controller, int value) noexcept:
     if controlchange_callback:
         controlchange_callback(channel, controller, value)
 
-cdef void programchange_callback_hook(int channel, int value):
+cdef void programchange_callback_hook(int channel, int value) noexcept:
     if programchange_callback:
         programchange_callback(channel, value)
 
-cdef void pitchbend_callback_hook(int channel, int value):
+cdef void pitchbend_callback_hook(int channel, int value) noexcept:
     if pitchbend_callback:
         pitchbend_callback(channel, value)
 
-cdef void aftertouch_callback_hook(int channel, int value):
+cdef void aftertouch_callback_hook(int channel, int value) noexcept:
     if aftertouch_callback:
         aftertouch_callback(channel, value)
 
-cdef void polyaftertouch_callback_hook(int channel, int pitch, int value):
+cdef void polyaftertouch_callback_hook(int channel, int pitch, int value) noexcept:
     if polyaftertouch_callback:
         polyaftertouch_callback(channel, pitch, value)
 
-cdef void midibyte_callback_hook(int port, int byte):
+cdef void midibyte_callback_hook(int port, int byte) noexcept:
     if midibyte_callback:
         midibyte_callback(port, byte)
 
@@ -230,7 +230,7 @@ cdef int audio_callback(const void *inputBuffer, void *outputBuffer,
                         unsigned long framesPerBuffer,
                         const libportaudio.PaStreamCallbackTimeInfo* timeInfo,
                         libportaudio.PaStreamCallbackFlags statusFlags,
-                        void *userData ) nogil:
+                        void *userData ) noexcept nogil:
     """Called by the PortAudio engine when audio is needed.
     
     It may be called at interrupt level on some machines so don't do anything
