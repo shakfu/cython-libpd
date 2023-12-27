@@ -8,7 +8,8 @@ LIBPD=src/libpd
 all: compile
 
 compile:
-	@CYTHONIZE=1 python3 setup.py build_ext --inplace
+	@CYTHONIZE=1 python3 setup.py build --build-lib ./build
+# 	@CYTHONIZE=1 python3 setup.py build_ext --inplace
 
 audio_test:
 	@echo "generating portaudio c implementation test"
@@ -29,10 +30,10 @@ minim:
 
 .PHONY: test clean test_atom
 
-test_atom: libpd
+test_atom: compile
 	@python3 ./tests/test_atom.py
 
-test: libpd
+test: compile
 	@python3 ./tests/test_pd_play.py
 
 clean:

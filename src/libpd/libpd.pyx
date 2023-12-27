@@ -893,13 +893,10 @@ cdef pd.t_pdinstance *this_instance():
 
     return libpd.libpd_this_instance()
 
-cdef pd.t_pdinstance *get_instance(int index):
-    """get a pd instance by index
-
-    returns NULL if index is out of bounds or "this" instance when libpd is not
-    compiled with PDINSTANCE
+cdef pd.t_pdinstance *main_instance():
+    """get the main pd instance, always valid.
     """
-    return libpd.libpd_get_instance(index)
+    return libpd.libpd_main_instance()
 
 cdef int num_instances():
     """get the number of pd instances

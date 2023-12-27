@@ -514,10 +514,8 @@ cdef extern from "z_libpd.h":
     # get the current pd instance
     pd.t_pdinstance *libpd_this_instance()
 
-    # get a pd instance by index
-    # returns NULL if index is out of bounds or "this" instance when libpd is not
-    # compiled with PDINSTANCE
-    pd.t_pdinstance *libpd_get_instance(int index)
+    # get the main pd instance, always valid
+    pd.t_pdinstance *libpd_main_instance()
 
     # get the number of pd instances
     # returns number or 1 when libpd is not compiled with PDINSTANCE

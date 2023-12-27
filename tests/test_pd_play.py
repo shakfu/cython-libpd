@@ -1,11 +1,11 @@
 
 import sys
-from os.path import dirname
+from os.path import dirname, join
 
-sys.path.insert(0, dirname(dirname(__file__)))
+sys.path.insert(0, join(dirname(dirname(__file__)), "build"))
 
-import pd
+import cypd
 
 
-p = pd.Patch(name='test.pd', dir='tests/pd')
+p = cypd.Patch(name='test.pd', dir='tests/pd')
 p.play()
